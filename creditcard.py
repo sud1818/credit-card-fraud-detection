@@ -26,17 +26,12 @@ st.markdown(
 )
 
 # -------------------------------------------------
-# Safely Import joblib
+# Try importing joblib safely
 # -------------------------------------------------
 try:
     import joblib
 except ModuleNotFoundError as e:
-    st.error(
-        f"❌ <b>joblib is not installed</b><br><br>"
-        f"Install it using:<br><code>pip install joblib</code><br><br>"
-        f"<b>Error:</b> {e}",
-        unsafe_allow_html=True
-    )
+    st.error("❌ joblib is not installed. Install it using:  pip install joblib")
     st.stop()
 
 # -------------------------------------------------
@@ -45,35 +40,20 @@ except ModuleNotFoundError as e:
 MODEL_PATH = "decision_tree_gini_model.pkl"
 
 if not os.path.exists(MODEL_PATH):
-    st.error(
-        f"❌ <b>Model not found!</b><br>"
-        f"Place <code>{MODEL_PATH}</code> in the same folder as the app.",
-        unsafe_allow_html=True
-    )
+    st.error(f"❌ Model file not found.\nMake sure '{MODEL_PATH}' exists.")
     st.stop()
 
 try:
     model = joblib.load(MODEL_PATH)
 except Exception as e:
-    st.error(
-        f"❌ Failed to load model.<br>"
-        f"Possible reasons:<br>"
-        f"- Different scikit-learn version<br>"
-        f"- Corrupted model file<br><br>"
-        f"<b>Error:</b> {e}",
-        unsafe_allow_html=True
-    )
+    st.error("❌ Failed to load model. Check model file or sklearn version.")
+    st.write("Full Error:", e)
     st.stop()
 
 # -------------------------------------------------
-# Input Section
+# Inputs
 # -------------------------------------------------
-st.markdown(
-    """
-    <h3 style='margin-top:30px; color:#2A6AB0;'>📌 Enter Transaction Details</h3>
-    """,
-    unsafe_allow_html=True
-)
+st.subheader("📌 Enter Transaction Details")
 
 col1, col2 = st.columns(2)
 
@@ -81,15 +61,13 @@ with col1:
     transaction_amount = st.number_input(
         "💰 Transaction Amount",
         min_value=0.01,
-        value=100.0,
-        help="Total amount spent in this transaction"
+        value=100.0
     )
 
     account_age_days = st.number_input(
         "📅 Account Age (days)",
         min_value=1.0,
-        value=120.0,
-        help="Number of days since account was opened"
+        value=120.0
     )
 
 with col2:
@@ -97,26 +75,23 @@ with col2:
         "⏱ Transaction Time (sec since midnight)",
         min_value=0.0,
         max_value=86400.0,
-        value=35000.0,
-        help="Time of day the transaction occurred"
+        value=35000.0
     )
 
     transaction_velocity = st.number_input(
         "📈 Transaction Velocity (transactions/hour)",
         min_value=0.0,
         max_value=20.0,
-        value=3.0,
-        help="How many transactions happen in last hour"
+        value=3.0
     )
 
 merchant_risk_score = st.slider(
     "🏪 Merchant Risk Score",
-    0.0, 1.0, 0.5,
-    help="Risk rating of merchant (0 = Safe, 1 = Very Risky)"
+    0.0, 1.0, 0.5
 )
 
 # -------------------------------------------------
-# Convert to DataFrame
+# Create Input DataFrame
 # -------------------------------------------------
 input_data = pd.DataFrame({
     "Transaction_Amount": [transaction_amount],
@@ -126,29 +101,20 @@ input_data = pd.DataFrame({
     "Transaction_Velocity": [transaction_velocity]
 })
 
-# Preview
-st.markdown(
-    "<h4 style='color:#2A6AB0;'>📊 Input Summary</h4>",
-    unsafe_allow_html=True
-)
+st.subheader("📊 Input Summary")
 st.dataframe(input_data, use_container_width=True)
 
 # -------------------------------------------------
-# Prediction
+# Predict
 # -------------------------------------------------
 if st.button("🔍 Run Fraud Detection"):
     try:
         prediction = model.predict(input_data)[0]
 
         if prediction == 1:
-            st.success(
-                "🟢 **Legitimate Transaction**\n\n"
-                "No suspicious behavior detected."
-            )
+            st.success("🟢 Legitimate Transaction – No suspicious activity detected.")
         else:
-            st.error(
-                "🔴 **Fraudulent Transaction Detected!**\n\n"
-                "Model determined that this transaction is high-risk."
-            )
+            st.error("🔴 Fraudulent Transaction Detected!")
     except Exception as e:
-        st.error(f"❌ Prediction failed.\n\nError: {e}")
+        st.error("❌ Prediction failed.")
+        st.write("Full Error:", e)
