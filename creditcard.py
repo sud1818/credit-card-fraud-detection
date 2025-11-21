@@ -93,7 +93,7 @@ if st.button("Predict"):
             "Possible reason: the model and input features do not match.\n"
             f"Error: {str(e)}"
         )
-        pip install joblib
+        
         
 
 
