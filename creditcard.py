@@ -1,32 +1,36 @@
 import streamlit as st
 import pandas as pd
-import joblib
 import os
 
 st.set_page_config(page_title="Credit Card Fraud Detection", page_icon="💳")
 
 st.title("💳 Credit Card Fraud Detection App")
-st.write("Enter transaction details to predict whether it is **Legitimate** or **Fraudulent**.")
+st.write("Enter transaction details to check if it is Legitimate or Fraudulent.")
 
-# ---------------------------
-# Load model safely
-# ---------------------------
+# Try to import joblib safely
+try:
+    import joblib
+except ModuleNotFoundError as e:
+    st.error(f"❌ joblib is not installed.\n\nInstall it using:\n\npip install joblib\n\n\nFull Error:\n{e}")
+    st.stop()
+
+# Try to load model
 MODEL_PATH = "decision_tree_gini_model.pkl"
 
 if not os.path.exists(MODEL_PATH):
-    st.error("❌ Model file not found! Make sure 'decision_tree_gini_model.pkl' exists in the same folder.")
+    st.error(f"❌ Model file not found!\nPlace '{MODEL_PATH}' in the same folder.")
     st.stop()
 
-model = joblib.load(MODEL_PATH)
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception as e:
+    st.error(f"❌ Failed to load model.\n\nPossible reasons:\n- sklearn version mismatch\n- corrupted model\n\nFull Error:\n{e}")
+    st.stop()
 
 # ---------------------------
-# User Inputs
+# User Input Fields
 # ---------------------------
-transaction_amount = st.number_input(
-    "Transaction Amount",
-    min_value=0.01,
-    value=100.0
-)
+transaction_amount = st.number_input("Transaction Amount", min_value=0.01, value=100.0)
 
 transaction_time = st.number_input(
     "Transaction Time (seconds since midnight)",
@@ -54,7 +58,7 @@ transaction_velocity = st.number_input(
 )
 
 # ---------------------------
-# Input DataFrame
+# Create Input DataFrame
 # ---------------------------
 input_data = pd.DataFrame({
     "Transaction_Amount": [transaction_amount],
@@ -64,16 +68,19 @@ input_data = pd.DataFrame({
     "Transaction_Velocity": [transaction_velocity]
 })
 
-st.write("### 🔍 Input Data Preview")
+st.write("### 🔍 Input Preview")
 st.dataframe(input_data)
 
 # ---------------------------
-# Predict
+# Prediction Button
 # ---------------------------
 if st.button("Predict"):
-    prediction = model.predict(input_data)[0]
+    try:
+        prediction = model.predict(input_data)[0]
 
-    if prediction == 1:
-        st.success("✅ Legitimate Transaction")
-    else:
-        st.error("🚨 Fraudulent Transaction Detected!")
+        if prediction == 1:
+            st.success("✅ Legitimate Transaction")
+        else:
+            st.error("🚨 Fraudulent Transaction Detected!")
+    except Exception as e:
+        st.error(f"❌ Prediction failed.\n\nFull Error:\n{e}")
